@@ -1,0 +1,133 @@
+---
+title: "dtr-demo"
+format:
+  html:
+    html-math-method: katex
+---
+
+## Rの準備
+### パッケージ
+```{r}
+library(tidyverse)
+library(gt)
+```
+
+## 1段階のDTR
+### Q学習のデモンストレーション
+#### DTRの推定
+##### モデル式
+$$
+\begin{aligned}
+& Y\mid\left(X=x,A=a\right)\sim \mathrm{N}\left(Q\left(x,a\right),1^2\right) & X\sim \mathrm{U}\left(0,1.5\right)\\
+& Q\left(x,a\right)=\mathrm{E}\left[Y\mid X=x,A=a\right]=x+a-ax & X\perp A
+\end{aligned}
+$$
+
+##### シミュレーションデータの生成
+```{r}
+set.seed(20230928)
+n <- 10000
+
+x <- runif(n, 0, 1.5)
+a <- rbinom(n, 1, 0.5)
+y <- rnorm(n, x + a * (1 - x), 1)
+```
+
+##### シミュレーションデータの描画
+```{r}
+#| code-fold: true
+#| fig-height: 6.5
+#| fig-width: 7
+#| fig-align: "center"
+#| cache: true
+sample_qdemo <- tibble(
+    x = x,
+    a = a,
+    trt = paste("A", "=", a, sep = " "),
+    y = y
+)
+
+g_sample_qdemo <- sample_qdemo |> ggplot() +
+    geom_point(mapping = aes(x = x, y = y, color = trt), size = 0.5, alpha = 0.5) +
+    geom_smooth(method="lm", mapping = aes(x = x, y = y, color = trt), se=FALSE, linewidth = 2) +
+    labs(color = "Treatment")
+g_sample_qdemo
+```
+
+なお、$a=0$ or $1$ のときの $Y$ の条件付き期待値はそれぞれ以下のとおりとなる。
+
+$$
+\begin{cases}
+    Q\left(x,0\right)=\mathrm{E}\left[Y\mid X=x,A=0\right]&=x+0-0 \cdot x \\
+    &=x & \text{if $a=0$,} \\
+    Q\left(x,1\right)=\mathrm{E}\left[Y\mid X=x,A=1\right]&=x+1-1 \cdot x \\
+    &=1 & \text{if $a=1$.}
+\end{cases}
+$$
+
+##### 交互作用項モデルの当てはめ
+```{r}
+fit <- lm(y ~ x * a)
+summary(fit)
+```
+
+Coefficientsを使うので、以下のとおり格納する。
+```{r}
+co <- coef(fit)
+```
+
+```{r}
+#| include: false
+library(signs)
+co_a <- signs(co["a"], accuracy = 1e-5)
+co_x <- signs(co["x:a"], accuracy = 1e-5, add_plusses = TRUE)
+```
+
+推定した最適DTR（ポリシー）は以下のとおりとなる。
+$$
+\hat{d}\left(x\right) = \mathrm{I}\left(`r co_a``r co_x`x > 0\right)
+$$
+
+### 価値の評価
+$$
+\begin{aligned}
+V\left(d\right) &= \mathrm{E}\left[Q\left(X,1\right)\mathrm{I}\left(d\left(X\right) = 1\right) + Q\left(X,0\right)\mathrm{I}\left(d\left(X\right) = 0\right)\right] \\
+\hat{V}\left(\hat{d}\right) &= \frac{1}{n}\sum_i\left[Q\left(x_i,1\right)\mathrm{I}\left(\hat{d}\left(x_i\right) = 1\right) + Q\left(x_i,0\right)\mathrm{I}\left(\hat{d}\left(x_i\right) = 0\right)\right]
+\end{aligned}
+$$
+
+```{r}
+d_func <- function(x, co1, co2) {
+    return(as.integer(co1 + x * co2 > 0))
+}
+
+xayq_opt <- tibble(
+    x = x,
+    a = a,
+    a_opt = d_func(x, co["a"], co["x:a"]),
+    y = y,
+    q1 = co["(Intercept)"] + x * co["x"] + 1 * co["a"] + 1 * x * co["x:a"],
+    q0 = co["(Intercept)"] + x * co["x"] + 0 * co["a"] + 0 * x * co["x:a"],
+    q_opt = ifelse(a_opt == 1, q1, q0)
+) |>
+mutate(i = row_number())
+
+t_xayq_opt <- xayq_opt |>
+    slice_head(n = 5) |>
+    gt() |>
+    fmt_number(columns = c("x", "y", "q1", "q0", "q_opt"), decimals = 5) |>
+    cols_label("x" = html("x<sub>i</sub>"), "a_opt" = html("a<sub>opt</sub>"), "q1" = html("Q(x<sub>i</sub>,1)"), "q0" = html("Q(x<sub>i</sub>,0)"), "q_opt" = html("Q<sub>opt</sub>")) |>
+    cols_move_to_start("i")
+t_xayq_opt
+
+meany_v_hat <- xayq_opt |>
+    summarise(mean_y = mean(y), v_hat = mean(q_opt))
+
+t_meany_v_hat <- meany_v_hat |>
+    gt() |>
+    fmt_number(columns = c("mean_y", "v_hat"), decimals = 5) |>
+    cols_label("mean_y" = "Mean(y)", "v_hat" = "V-hat")
+t_meany_v_hat
+```
+
+### 推定価値の評価
