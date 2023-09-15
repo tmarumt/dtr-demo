@@ -1,0 +1,30 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "dtr-demo",
+    "section": "",
+    "text": "library(tidyverse)\nlibrary(gt)"
+  },
+  {
+    "objectID": "index.html#rの準備",
+    "href": "index.html#rの準備",
+    "title": "dtr-demo",
+    "section": "",
+    "text": "library(tidyverse)\nlibrary(gt)"
+  },
+  {
+    "objectID": "index.html#段階のdtr",
+    "href": "index.html#段階のdtr",
+    "title": "dtr-demo",
+    "section": "1段階のDTR",
+    "text": "1段階のDTR\n\nQ学習のデモンストレーション\n\nDTRの推定\n\nモデル式\n\n\\begin{aligned}\n& Y\\mid\\left(X=x,A=a\\right)\\sim \\mathrm{N}\\left(Q\\left(x,a\\right),1^2\\right) & X\\sim \\mathrm{U}\\left(0,1.5\\right)\\\\\n& Q\\left(x,a\\right)=\\mathrm{E}\\left[Y\\mid X=x,A=a\\right]=x+a-ax & X\\perp A\n\\end{aligned}\n\n\n\nシミュレーションデータの生成\n\nset.seed(20230928)\nn &lt;- 10000\n\nx &lt;- runif(n, 0, 1.5)\na &lt;- rbinom(n, 1, 0.5)\ny &lt;- rnorm(n, x + a * (1 - x), 1)\n\n\n\nシミュレーションデータの描画\n\n\nCode\nsample_qdemo &lt;- tibble(\n    x = x,\n    a = a,\n    trt = paste(\"A\", \"=\", a, sep = \" \"),\n    y = y\n)\n\ng_sample_qdemo &lt;- sample_qdemo |&gt; ggplot() +\n    geom_point(mapping = aes(x = x, y = y, color = trt), size = 0.5, alpha = 0.5) +\n    geom_smooth(method=\"lm\", mapping = aes(x = x, y = y, color = trt), se=FALSE, linewidth = 2) +\n    labs(color = \"Treatment\")\ng_sample_qdemo\n\n\n`geom_smooth()` using formula = 'y ~ x'\n\n\n\n\n\n\n\n\n\nなお、a=0 or 1 のときの Y の条件付き期待値はそれぞれ以下のとおりとなる。\n\n\\begin{cases}\nQ\\left(x,0\\right)=\\mathrm{E}\\left[Y\\mid X=x,A=0\\right]&=x+0-0 \\cdot x \\\\\n&=x & \\text{if $a=0$,} \\\\\nQ\\left(x,1\\right)=\\mathrm{E}\\left[Y\\mid X=x,A=1\\right]&=x+1-1 \\cdot x \\\\\n&=1 & \\text{if $a=1$.}\n\\end{cases}\n\n\n\n交互作用項モデルの当てはめ\n\nfit &lt;- lm(y ~ x * a)\nsummary(fit)\n\n\nCall:\nlm(formula = y ~ x * a)\n\nResiduals:\n    Min      1Q  Median      3Q     Max \n-3.6295 -0.6736 -0.0040  0.6802  3.6572 \n\nCoefficients:\n            Estimate Std. Error t value Pr(&gt;|t|)    \n(Intercept)  0.07468    0.02841   2.628  0.00859 ** \nx            0.94461    0.03267  28.916  &lt; 2e-16 ***\na            0.90828    0.04014  22.626  &lt; 2e-16 ***\nx:a         -0.90466    0.04641 -19.494  &lt; 2e-16 ***\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\nResidual standard error: 1.002 on 9996 degrees of freedom\nMultiple R-squared:  0.08799,   Adjusted R-squared:  0.08771 \nF-statistic: 321.5 on 3 and 9996 DF,  p-value: &lt; 2.2e-16\n\n\nCoefficientsを使うので、以下のとおり格納する。\n\nco &lt;- coef(fit)\n\n推定した最適DTR（ポリシー）は以下のとおりとなる。 \n\\hat{d}\\left(x\\right) = \\mathrm{I}\\left(0.90828−0.90466x &gt; 0\\right)\n\n\n\n\n価値の評価\n\n価値関数と推定価値関数\n\n\\begin{aligned}\nV\\left(d\\right) &= \\mathrm{E}\\left[Q\\left(X,1\\right)\\mathrm{I}\\left(d\\left(X\\right) = 1\\right) + Q\\left(X,0\\right)\\mathrm{I}\\left(d\\left(X\\right) = 0\\right)\\right] \\\\\n\\hat{V}\\left(\\hat{d}\\right) &= \\frac{1}{n}\\sum_i\\left[Q\\left(x_i,1\\right)\\mathrm{I}\\left(\\hat{d}\\left(x_i\\right) = 1\\right) + Q\\left(x_i,0\\right)\\mathrm{I}\\left(\\hat{d}\\left(x_i\\right) = 0\\right)\\right]\n\\end{aligned}\n\n\n\n価値（関数）の推定\n\nd_func &lt;- function(x, co1, co2) {\n    return(as.integer(co1 + x * co2 &gt; 0))\n}\n\nxayq_opt &lt;- tibble(\n    x = x,\n    a = a,\n    a_opt = d_func(x, co[\"a\"], co[\"x:a\"]),\n    y = y,\n    q1 = co[\"(Intercept)\"] + x * co[\"x\"] + 1 * co[\"a\"] + 1 * x * co[\"x:a\"],\n    q0 = co[\"(Intercept)\"] + x * co[\"x\"] + 0 * co[\"a\"] + 0 * x * co[\"x:a\"],\n    q_opt = ifelse(a_opt == 1, q1, q0)\n) |&gt;\nmutate(i = row_number())\n\nt_xayq_opt &lt;- xayq_opt |&gt;\n    slice_head(n = 5) |&gt;\n    gt() |&gt;\n    fmt_number(columns = c(\"x\", \"y\", \"q1\", \"q0\", \"q_opt\"), decimals = 5) |&gt;\n    cols_label(\"x\" = html(\"x&lt;sub&gt;i&lt;/sub&gt;\"), \"a_opt\" = html(\"a&lt;sub&gt;opt&lt;/sub&gt;\"), \"q1\" = html(\"Q(x&lt;sub&gt;i&lt;/sub&gt;,1)\"), \"q0\" = html(\"Q(x&lt;sub&gt;i&lt;/sub&gt;,0)\"), \"q_opt\" = html(\"Q&lt;sub&gt;opt&lt;/sub&gt;\")) |&gt;\n    cols_move_to_start(\"i\")\nt_xayq_opt\n\n\n\n\n\n  \n    \n    \n      i\n      xi\n      a\n      aopt\n      y\n      Q(xi,1)\n      Q(xi,0)\n      Qopt\n    \n  \n  \n    1\n0.64344\n0\n1\n2.93196\n1.00867\n0.68247\n1.00867\n    2\n1.02495\n1\n0\n0.75846\n1.02391\n1.04286\n1.04286\n    3\n0.86730\n0\n1\n−0.27369\n1.01761\n0.89394\n1.01761\n    4\n0.87441\n0\n1\n0.32206\n1.01789\n0.90066\n1.01789\n    5\n0.18038\n0\n1\n1.25212\n0.99017\n0.24507\n0.99017\n  \n  \n  \n\n\n\nmeany_v_hat &lt;- xayq_opt |&gt;\n    summarise(mean_y = mean(y), v_hat = mean(q_opt))\n\nt_meany_v_hat &lt;- meany_v_hat |&gt;\n    gt() |&gt;\n    fmt_number(columns = c(\"mean_y\", \"v_hat\"), decimals = 5) |&gt;\n    cols_label(\"mean_y\" = \"Mean of y\", \"v_hat\" = \"V-hat\")\nt_meany_v_hat\n\n\n\n\n\n  \n    \n    \n      Mean of y\n      V-hat\n    \n  \n  \n    0.89965\n1.08629\n  \n  \n  \n\n\n\n\n\n\n\n推定価値の評価\n\n推定したDTRで治療を行った場合のテストデータの生成\n\nset.seed(20230928 + 1)\nn &lt;- 10000\n\nx_test &lt;- runif(n, 0, 1.5)\na_test &lt;- d_func(x_test, co[\"a\"], co[\"x:a\"])\ny_test &lt;- rnorm(n, x_test + a_test * (1 - x_test), 1)\n\n\n\nテストデータに対して推定DTRによる治療を行った場合の価値の推定\n\nmeany_v_hat_test &lt;- meany_v_hat |&gt;\n    mutate(mean_y_test = mean(y_test))\n\nt_meany_v_hat_test &lt;- meany_v_hat_test |&gt;\n    gt() |&gt;\n    fmt_number(columns = c(\"mean_y\", \"v_hat\", \"mean_y_test\"), decimals = 5) |&gt;\n    cols_label(\"mean_y\" = \"Mean of y\", \"v_hat\" = \"V-hat\", \"mean_y_test\" = \"Mean of y (test)\")\nt_meany_v_hat_test\n\n\n\n\n\n  \n    \n    \n      Mean of y\n      V-hat\n      Mean of y (test)\n    \n  \n  \n    0.89965\n1.08629\n1.08627"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "About this site"
+  }
+]
