@@ -1,46 +1,56 @@
 ---
-title: "dtr-demo"
+execute:
+  echo: true
+
+title: "Demonstration of Dynamic Treatment Regimen"
 format:
-  html:
+  revealjs:
+    standalone: true
+    embed-resources: true
+    width: 1600
+    height: 900
+    slide-number: true
+    fig-format: svg
     html-math-method: katex
 ---
 
-## Rの準備
-### パッケージ
+## Rパッケージ
 ```{r}
 #| output: false
 library(tidyverse)
 library(gt)
 ```
 
-## 1段階のDTR
-### Q学習のデモンストレーション
-#### DTRの推定
-##### モデル式
+# Q学習のデモンストレーション
+## DTRの推定
+:::: {.columns}
+
+::: {.column width="100%" height="50%"}
 $$
 \begin{aligned}
 & Y\mid\left(X=x,A=a\right)\sim \mathrm{N}\left(Q\left(x,a\right),1^2\right) & X\sim \mathrm{U}\left(0,1.5\right)\\
 & Q\left(x,a\right)=\mathrm{E}\left[Y\mid X=x,A=a\right]=x+a-ax & X\perp A
 \end{aligned}
 $$
+:::
 
-##### シミュレーションデータの生成
+::: {.column width="40%" height="50%"}
+シミュレーションデータの生成
 ```{r}
 set.seed(20230928)
 n <- 10000
-
 x <- runif(n, 0, 1.5)
 a <- rbinom(n, 1, 0.5)
 y <- rnorm(n, x + a * (1 - x), 1)
 ```
+:::
 
-##### シミュレーションデータの描画
+::: {.column width="60%" height="50%"}
 ```{r}
-#| code-fold: true
+#| echo: false
 #| fig-height: 6.5
 #| fig-width: 7
 #| fig-align: "center"
-#| cache: true
 sample_qdemo <- tibble(
     x = x,
     a = a,
@@ -54,9 +64,11 @@ g_sample_qdemo <- sample_qdemo |> ggplot() +
     labs(color = "Treatment")
 g_sample_qdemo
 ```
+:::
 
-なお、$a=0$ or $1$ のときの $Y$ の条件付き期待値はそれぞれ以下のとおりとなる。
+::::
 
+## $a=0$ or $1$ のときの $Y$ の条件付き期待値
 $$
 \begin{cases}
 Q\left(x,0\right)=\mathrm{E}\left[Y\mid X=x,A=0\right]&=x+0-0 \cdot x \\
@@ -66,31 +78,28 @@ Q\left(x,1\right)=\mathrm{E}\left[Y\mid X=x,A=1\right]&=x+1-1 \cdot x \\
 \end{cases}
 $$
 
-##### 交互作用項モデルの当てはめ
+## 交互作用項モデルの当てはめ
 ```{r}
 fit <- lm(y ~ x * a)
 summary(fit)
 ```
 
-Coefficientsを使うので、以下のとおり格納する。
-```{r}
-co <- coef(fit)
-```
-
+## 推定した最適DTR（ポリシー）
 ```{r}
 #| include: false
+co <- coef(fit)
+
 library(signs)
 co_a <- signs(co["a"], accuracy = 1e-5)
 co_x <- signs(co["x:a"], accuracy = 1e-5, add_plusses = TRUE)
 ```
 
-推定した最適DTR（ポリシー）は以下のとおりとなる。
 $$
 \hat{d}\left(x\right) = \mathrm{I}\left(`r co_a``r co_x`x > 0\right)
 $$
 
-#### 価値の評価
-##### 価値関数と推定価値関数
+## 価値の評価
+- 価値関数と推定価値関数
 $$
 \begin{aligned}
 V\left(d\right) &= \mathrm{E}\left[Q\left(X,1\right)\mathrm{I}\left(d\left(X\right) = 1\right) + Q\left(X,0\right)\mathrm{I}\left(d\left(X\right) = 0\right)\right] \\
@@ -98,7 +107,7 @@ V\left(d\right) &= \mathrm{E}\left[Q\left(X,1\right)\mathrm{I}\left(d\left(X\rig
 \end{aligned}
 $$
 
-##### 価値（関数）の推定
+## 価値（関数）の推定
 ```{r}
 d_func <- function(x, co1, co2) {
     return(as.integer(co1 + x * co2 > 0))
@@ -133,8 +142,8 @@ t_meany_v_hat <- meany_v_hat |>
 t_meany_v_hat
 ```
 
-#### 推定価値の評価
-##### 推定したDTRで治療を行った場合のテストデータの生成
+## 推定価値の評価
+- 推定したDTRで治療を行った場合のテストデータの生成
 ```{r}
 set.seed(20230928 + 1)
 n <- 10000
@@ -144,7 +153,7 @@ a_test <- d_func(x_test, co["a"], co["x:a"])
 y_test <- rnorm(n, x_test + a_test * (1 - x_test), 1)
 ```
 
-##### テストデータに対して推定DTRによる治療を行った場合の価値の推定
+- テストデータに対して推定DTRによる治療を行った場合の価値の推定
 ```{r}
 meany_v_hat_test <- meany_v_hat |>
     mutate(mean_y_test = mean(y_test))
