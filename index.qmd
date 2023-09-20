@@ -1,7 +1,4 @@
 ---
-execute:
-  echo: true
-
 title: "Demonstration of Dynamic Treatment Regimen"
 format:
   revealjs:
@@ -12,6 +9,8 @@ format:
     slide-number: true
     fig-format: svg
     html-math-method: katex
+execute:
+  echo: true
 ---
 
 ## Rパッケージ
@@ -25,7 +24,6 @@ library(gtExtras)
 # Q学習のデモンストレーション
 ## DTRの推定
 :::: {.columns}
-
 ::: {.column width="100%" height="50%"}
 $$
 \begin{aligned}
@@ -36,6 +34,8 @@ $$
 :::
 
 ::: {.column width="40%" height="50%"}
+::: {.r-stack}
+::: {.fragment .fade-out fragment-index=1}
 シミュレーションデータの生成
 ```{r}
 set.seed(20230928)
@@ -44,7 +44,9 @@ x <- runif(n, 0, 1.5)
 a <- rbinom(n, 1, 0.5)
 y <- rnorm(n, x + a * (1 - x), 1)
 ```
+:::
 
+::: {.fragment .fade-in-then-out fragment-index=1}
 $a=0$ or $1$ のときの $Y$ の条件付き期待値
 $$
 \begin{cases}
@@ -58,7 +60,28 @@ Q\left(x,1\right)&=\mathrm{E}\left[Y\mid X=x,A=1\right] \\
 $$
 :::
 
+::: {.fragment .fade-in fragment-index=2}
+交互作用モデルの当てはめ
+```{r}
+fit <- lm(y ~ x * a)
+co <- coef(fit)
+```
+
+```{r}
+#| echo: false
+t_co <- as.data.frame(co) |> rownames_to_column("Variable") |>
+  rename(Estimate = co) |>
+  gt() |>
+  gt_highlight_rows(rows = 3:4)
+t_co
+```
+:::
+:::
+:::
+
 ::: {.column width="60%" height="50%"}
+::: {.r-stack}
+::: {.fragment .fade-out fragment-index=2}
 ```{r}
 #| echo: false
 #| fig-height: 6.5
@@ -79,20 +102,7 @@ g_sample_qdemo
 ```
 :::
 
-::::
-
-## DTRの推定
-交互作用項モデルの当てはめ
-```{r}
-fit <- lm(y ~ x * a)
-co <- coef(fit)
-t_co <- as.data.frame(co) |> rownames_to_column("Variable") |>
-  rename(Estimate = co) |>
-  gt() |>
-  gt_highlight_rows(rows = 3:4)
-t_co
-```
-
+::: {.fragment .fade-in fragment-index=2}
 推定した最適DTR（ポリシー）
 ```{r}
 #| include: false
@@ -104,11 +114,14 @@ co_x <- signs(co["x:a"], accuracy = 1e-5, add_plusses = TRUE)
 $$
 \hat{d}\left(x\right) = \mathrm{I}\left(`r co_a``r co_x`x > 0\right)
 $$
+:::
+:::
+:::
+::::
 
 ## 価値の評価
 :::: {.columns}
-
-::: {.column width="100%" height="30%"}
+::: {.column width="100%" height="50%"}
 $$
 \begin{aligned}
 V\left(d\right) &= \mathrm{E}\left[Q\left(X,1\right)\mathrm{I}\left(d\left(X\right) = 1\right) + Q\left(X,0\right)\mathrm{I}\left(d\left(X\right) = 0\right)\right] \\
@@ -117,8 +130,11 @@ V\left(d\right) &= \mathrm{E}\left[Q\left(X,1\right)\mathrm{I}\left(d\left(X\rig
 $$
 :::
 
-::: {.column width="70%" height="35%"}
+::: {.column width="50%" height="50%"}
+::: {.r-stack}
+::: {.fragment .fade-out fragment-index=1}
 ```{r}
+#| code-line-numbers: "10-11"
 d_func <- function(x, co1, co2) {
   return(as.integer(co1 + x * co2 > 0))
 }
@@ -128,15 +144,33 @@ xayq_opt <- tibble(
   a = a,
   a_opt = d_func(x, co["a"], co["x:a"]),
   y = y,
-  q1 = co["(Intercept)"] + x * co["x"] + 1 * co["a"] + 1 * x * co["x:a"],
-  q0 = co["(Intercept)"] + x * co["x"] + 0 * co["a"] + 0 * x * co["x:a"],
+  q1 = co[1] + x * co["x"] + 1 * co["a"] + 1 * x * co["x:a"],
+  q0 = co[1] + x * co["x"] + 0 * co["a"] + 0 * x * co["x:a"],
   q_opt = ifelse(a_opt == 1, q1, q0)
 ) |>
   mutate(i = row_number())
 ```
 :::
 
-::: {.column width="30%" height="35%"}
+::: {.fragment .fade-in fragment-index=1}
+```{r}
+meany_v_hat <- xayq_opt |>
+  summarise(mean_y = mean(y), v_hat = mean(q_opt))
+```
+
+```{r}
+#| echo: false
+t_meany_v_hat <- meany_v_hat |>
+  gt() |>
+  fmt_number(columns = c("mean_y", "v_hat"), decimals = 5)
+  # cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat")
+t_meany_v_hat
+```
+:::
+:::
+:::
+
+::: {.column width="50%" height="50%"}
 ```{r}
 #| echo: false
 t_xayq_opt <- xayq_opt |>
@@ -146,20 +180,6 @@ t_xayq_opt <- xayq_opt |>
   # cols_label("x" = html("x<sub>i</sub>"), "a_opt" = html("a<sub>opt</sub>"), "q1" = html("Q(x<sub>i</sub>,1)"), "q0" = html("Q(x<sub>i</sub>,0)"), "q_opt" = html("Q<sub>opt</sub>")) |>
   cols_move_to_start("i")
 t_xayq_opt
-```
-:::
-
-::: {.column width="100%" height="35%"}
-```{r}
-#| output-location: column
-meany_v_hat <- xayq_opt |>
-  summarise(mean_y = mean(y), v_hat = mean(q_opt))
-
-t_meany_v_hat <- meany_v_hat |>
-  gt() |>
-  fmt_number(columns = c("mean_y", "v_hat"), decimals = 5) |>
-  cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat")
-t_meany_v_hat
 ```
 :::
 
