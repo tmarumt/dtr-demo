@@ -87,18 +87,18 @@ t_co
 #| fig-height: 6.5
 #| fig-width: 7
 #| fig-align: "center"
-sample_qdemo <- tibble(
+sample_1dtr <- tibble(
   x = x,
   a = a,
   trt = paste("A", "=", a, sep = " "),
   y = y
 )
 
-g_sample_qdemo <- sample_qdemo |> ggplot() +
+g_sample_1dtr <- sample_1dtr |> ggplot() +
   geom_point(mapping = aes(x = x, y = y, color = trt), size = 0.5, alpha = 0.5) +
   geom_smooth(method = "lm", mapping = aes(x = x, y = y, color = trt), se = FALSE, linewidth = 2) +
   labs(color = "Treatment")
-g_sample_qdemo
+g_sample_1dtr
 ```
 :::
 
@@ -134,15 +134,14 @@ $$
 ::: {.r-stack}
 ::: {.fragment .fade-out fragment-index=1}
 ```{r}
-#| code-line-numbers: "10-11"
-d_func <- function(x, co1, co2) {
+policy_1dtr <- function(x, co1, co2) {
   return(as.integer(co1 + x * co2 > 0))
 }
 
-xayq_opt <- tibble(
+ite_1dtr <- tibble(
   x = x,
   a = a,
-  a_opt = d_func(x, co["a"], co["x:a"]),
+  a_opt = policy_1dtr(x, co["a"], co["x:a"]),
   y = y,
   q1 = co[1] + x * co["x"] + 1 * co["a"] + 1 * x * co["x:a"],
   q0 = co[1] + x * co["x"] + 0 * co["a"] + 0 * x * co["x:a"],
@@ -150,22 +149,25 @@ xayq_opt <- tibble(
 ) |>
   mutate(i = row_number())
 ```
+`q1`、`q0`はそれぞれ $a=1$ 、$a=0$ に強制的に割れ当てたときの推定期待値
 :::
 
 ::: {.fragment .fade-in fragment-index=1}
 ```{r}
-meany_v_hat <- xayq_opt |>
+ate_1dtr <- ite_1dtr |>
   summarise(mean_y = mean(y), v_hat = mean(q_opt))
 ```
 
 ```{r}
 #| echo: false
-t_meany_v_hat <- meany_v_hat |>
+t_ate_1dtr <- ate_1dtr |>
   gt() |>
   fmt_number(columns = c("mean_y", "v_hat"), decimals = 5)
-  # cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat")
-t_meany_v_hat
+  # |> cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat")
+t_ate_1dtr
 ```
+推定した最適DTR（ポリシー）に従えば、アウトカムが $0.2$ ほど改善  
+※ あくまで学習データに基づく推測
 :::
 :::
 :::
@@ -173,16 +175,15 @@ t_meany_v_hat
 ::: {.column width="50%" height="50%"}
 ```{r}
 #| echo: false
-t_xayq_opt <- xayq_opt |>
+t_ite_1dtr <- ite_1dtr |>
   slice_head(n = 7) |>
   gt() |>
   fmt_number(columns = c("x", "y", "q1", "q0", "q_opt"), decimals = 5) |>
   # cols_label("x" = html("x<sub>i</sub>"), "a_opt" = html("a<sub>opt</sub>"), "q1" = html("Q(x<sub>i</sub>,1)"), "q0" = html("Q(x<sub>i</sub>,0)"), "q_opt" = html("Q<sub>opt</sub>")) |>
   cols_move_to_start("i")
-t_xayq_opt
+t_ite_1dtr
 ```
 :::
-
 ::::
 
 ## 推定価値の評価
@@ -190,20 +191,23 @@ t_xayq_opt
 ```{r}
 set.seed(20230928 + 1)
 n <- 10000
-
 x_test <- runif(n, 0, 1.5)
-a_test <- d_func(x_test, co["a"], co["x:a"])
+a_test <- policy_1dtr(x_test, co["a"], co["x:a"])
 y_test <- rnorm(n, x_test + a_test * (1 - x_test), 1)
 ```
 
 テストデータに対して推定DTRによる治療を行った場合の価値の推定
 ```{r}
-meany_v_hat_test <- meany_v_hat |>
+ate_test_1dtr <- ate_1dtr |>
   mutate(mean_y_test = mean(y_test))
-
-t_meany_v_hat_test <- meany_v_hat_test |>
-  gt() |>
-  fmt_number(columns = c("mean_y", "v_hat", "mean_y_test"), decimals = 5) |>
-  cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat", "mean_y_test" = "Mean of y (test)")
-t_meany_v_hat_test
 ```
+
+```{r}
+#| echo: false
+t_ate_test_1dtr <- ate_test_1dtr |>
+  gt() |>
+  fmt_number(columns = c("mean_y", "v_hat", "mean_y_test"), decimals = 5)
+  # |> cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat", "mean_y_test" = "Mean of y (test)")
+t_ate_test_1dtr
+```
+`mean_y_test`が学習データに基づく推定価値（ $=\hat{V}\left(\hat{d}\right)=$ （`v_hat`））に近い値を示したため、価値関数の推定はある程度正しかったと言える。
