@@ -168,7 +168,7 @@ t_ate_1dtr <- ate_1dtr |>
   tab_options(table.width = pct(50), table.font.size = pct(65))
 t_ate_1dtr
 ```
-推定した最適DTR（ポリシー）に従えば、アウトカムが $0.2$ ほど改善  
+推定した最適DTR（ポリシー）に従えば、アウトカムが $`r round(abs(ate_1dtr["mean_y"] - ate_1dtr["v_hat"]), 1)`$ ほど改善  
 ※ あくまで学習データに基づく推測
 :::
 :::
