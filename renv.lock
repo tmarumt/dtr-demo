@@ -20,6 +20,50 @@
       ],
       "Hash": "b2866e62bab9378c3cc9476a1954226b"
     },
+    "DTRlearn2": {
+      "Package": "DTRlearn2",
+      "Version": "1.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "MASS",
+        "Matrix",
+        "R",
+        "foreach",
+        "glmnet",
+        "kernlab"
+      ],
+      "Hash": "3bb125ce42df383ad8fd8174782d64b0"
+    },
+    "DTRreg": {
+      "Package": "DTRreg",
+      "Version": "1.7",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "MASS",
+        "dplyr",
+        "graphics",
+        "stats",
+        "utils"
+      ],
+      "Hash": "7d0a44c557ae475ba37c4f7d11ee7454"
+    },
+    "DynTxRegime": {
+      "Package": "DynTxRegime",
+      "Version": "4.14",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "dfoptim",
+        "kernlab",
+        "methods",
+        "modelObj",
+        "rgenoud",
+        "stats"
+      ],
+      "Hash": "e3d14fe74ef780c4862d55409caef4ee"
+    },
     "MASS": {
       "Package": "MASS",
       "Version": "7.3-60",
@@ -81,6 +125,20 @@
         "utils"
       ],
       "Hash": "ae6cbbe1492f4de79c45fce06f967ce8"
+    },
+    "RcppEigen": {
+      "Package": "RcppEigen",
+      "Version": "0.3.3.9.3",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "Matrix",
+        "R",
+        "Rcpp",
+        "stats",
+        "utils"
+      ],
+      "Hash": "1e035db628cefb315c571202d70202fe"
     },
     "V8": {
       "Package": "V8",
@@ -276,6 +334,16 @@
       ],
       "Hash": "3f038e5ac7f41d4ac41ce658c85e3042"
     },
+    "codetools": {
+      "Package": "codetools",
+      "Version": "0.2-19",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "c089a619a7fae175d149d89164f8c7d8"
+    },
     "colorspace": {
       "Package": "colorspace",
       "Version": "2.1-0",
@@ -380,6 +448,16 @@
         "withr"
       ],
       "Hash": "d6fd1b1440c1cacc6623aaa4e9fe352b"
+    },
+    "dfoptim": {
+      "Package": "dfoptim",
+      "Version": "2023.1.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "cbdb21c3cab8b7811eca032f266ff7b2"
     },
     "digest": {
       "Package": "digest",
@@ -510,6 +588,19 @@
       ],
       "Hash": "1a0a9a3d5083d0d573c4214576f1e690"
     },
+    "foreach": {
+      "Package": "foreach",
+      "Version": "1.5.2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "codetools",
+        "iterators",
+        "utils"
+      ],
+      "Hash": "618609b42c9406731ead03adf5379850"
+    },
     "fs": {
       "Package": "fs",
       "Version": "1.6.3",
@@ -578,6 +669,24 @@
         "withr"
       ],
       "Hash": "85846544c596e71f8f46483ab165da33"
+    },
+    "glmnet": {
+      "Package": "glmnet",
+      "Version": "4.1-8",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "Matrix",
+        "R",
+        "Rcpp",
+        "RcppEigen",
+        "foreach",
+        "methods",
+        "shape",
+        "survival",
+        "utils"
+      ],
+      "Hash": "eb6fc70e561aae41d5911a6726188f71"
     },
     "glue": {
       "Package": "glue",
@@ -825,6 +934,17 @@
       ],
       "Hash": "0080607b4a1a7b28979aecef976d8bc2"
     },
+    "iterators": {
+      "Package": "iterators",
+      "Version": "1.0.14",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "utils"
+      ],
+      "Hash": "8954069286b4b2b0d023d1b288dce978"
+    },
     "jquerylib": {
       "Package": "jquerylib",
       "Version": "0.1.4",
@@ -854,6 +974,20 @@
         "V8"
       ],
       "Hash": "3bcd11943da509341838da9399e18bce"
+    },
+    "kernlab": {
+      "Package": "kernlab",
+      "Version": "0.9-32",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics",
+        "methods",
+        "stats"
+      ],
+      "Hash": "d7d6a7cb690ac73eeced99e1ed9d6cdb"
     },
     "knitr": {
       "Package": "knitr",
@@ -983,6 +1117,16 @@
         "tools"
       ],
       "Hash": "18e9c28c1d3ca1560ce30658b22ce104"
+    },
+    "modelObj": {
+      "Package": "modelObj",
+      "Version": "4.2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "methods"
+      ],
+      "Hash": "7ed03e8451fa99da4c51d78206c62b6b"
     },
     "modelr": {
       "Package": "modelr",
@@ -1283,6 +1427,17 @@
       ],
       "Hash": "d66fe009d4c20b7ab1927eb405db9ee2"
     },
+    "rgenoud": {
+      "Package": "rgenoud",
+      "Version": "5.9-0.3",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "utils"
+      ],
+      "Hash": "743092f662f4b45d4a61e6c333ddd117"
+    },
     "rlang": {
       "Package": "rlang",
       "Version": "1.1.1",
@@ -1390,6 +1545,19 @@
       ],
       "Hash": "3838071b66e0c566d55cc26bd6e27bf4"
     },
+    "shape": {
+      "Package": "shape",
+      "Version": "1.4.6",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics",
+        "stats"
+      ],
+      "Hash": "9067f962730f58b14d8ae54ca885509f"
+    },
     "signs": {
       "Package": "signs",
       "Version": "0.1.2",
@@ -1430,6 +1598,22 @@
         "vctrs"
       ],
       "Hash": "671a4d384ae9d32fc47a14e98bfa3dc8"
+    },
+    "survival": {
+      "Package": "survival",
+      "Version": "3.5-5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Matrix",
+        "R",
+        "graphics",
+        "methods",
+        "splines",
+        "stats",
+        "utils"
+      ],
+      "Hash": "d683341b1fa2e8d817efde27d6e6d35b"
     },
     "sys": {
       "Package": "sys",

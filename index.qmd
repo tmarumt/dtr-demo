@@ -19,6 +19,9 @@ execute:
 library(tidyverse)
 library(gt)
 library(gtExtras)
+library(DTRlearn2)
+library(DynTxRegime)
+library(DTRreg)
 ```
 
 # Q学習のデモンストレーション
