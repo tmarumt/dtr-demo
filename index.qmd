@@ -13,20 +13,21 @@ execute:
   echo: true
 ---
 
-## Rパッケージ
+## 共通して使用するR-package
+
 ```{r}
 #| output: false
 library(tidyverse)
 library(gt)
 library(gtExtras)
-library(DTRlearn2)
-library(DynTxRegime)
-library(DTRreg)
 ```
 
 # Q学習のデモンストレーション
+
 ## DTRの推定
+
 :::: {.columns}
+
 ::: {.column width="100%" height="50%"}
 $$
 \begin{aligned}
@@ -40,6 +41,7 @@ $$
 ::: {.r-stack}
 ::: {.fragment .fade-out fragment-index=1}
 シミュレーションデータの生成
+
 ```{r}
 set.seed(20230928)
 n <- 10000
@@ -65,6 +67,7 @@ $$
 
 ::: {.fragment .fade-in fragment-index=2}
 交互作用モデルの当てはめ
+
 ```{r}
 fit <- lm(y ~ x * a)
 co <- coef(fit)
@@ -108,6 +111,7 @@ g_sample_1dtr
 
 ::: {.fragment .fade-in fragment-index=2}
 推定した最適DTR（ポリシー）
+
 ```{r}
 #| include: false
 library(signs)
@@ -121,10 +125,13 @@ $$
 :::
 :::
 :::
+
 ::::
 
 ## 価値の評価
+
 :::: {.columns}
+
 ::: {.column width="100%" height="50%"}
 $$
 \begin{aligned}
@@ -153,6 +160,7 @@ ite_1dtr <- tibble(
 ) |>
   mutate(i = row_number())
 ```
+
 `q1`、`q0`はそれぞれ $a=1$ 、$a=0$ に強制的に割れ当てたときの推定期待値
 :::
 
@@ -171,6 +179,7 @@ t_ate_1dtr <- ate_1dtr |>
   tab_options(table.width = pct(50), table.font.size = pct(65))
 t_ate_1dtr
 ```
+
 推定した最適DTR（ポリシー）に従えば、アウトカムが $`r round(abs(ate_1dtr["mean_y"] - ate_1dtr["v_hat"]), 1)`$ ほど改善  
 ※ あくまで学習データに基づく推測
 :::
@@ -190,10 +199,13 @@ t_ite_1dtr <- ite_1dtr |>
 t_ite_1dtr
 ```
 :::
+
 ::::
 
 ## 推定価値の評価
+
 推定したDTRで治療を行った場合のテストデータの生成
+
 ```{r}
 set.seed(20230928 + 1)
 n <- 10000
@@ -203,6 +215,7 @@ y_test <- rnorm(n, x_test + a_test * (1 - x_test), 1)
 ```
 
 テストデータに対して推定DTRによる治療を行った場合の価値の推定
+
 ```{r}
 ate_test_1dtr <- ate_1dtr |>
   mutate(mean_y_test = mean(y_test))
@@ -217,4 +230,15 @@ t_ate_test_1dtr <- ate_test_1dtr |>
   tab_options(table.width = pct(50), table.font.size = pct(65))
 t_ate_test_1dtr
 ```
-`mean_y_test`が学習データに基づく推定価値（ $=\hat{V}\left(\hat{d}\right)=$ （`v_hat`））に近い値を示したため、価値関数の推定はある程度正しかったと言える。
+
+`mean_y_test`が学習データに基づく推定価値（ $=\hat{V}\left(\hat{d}\right)=$ `v_hat`）に近い値を示したため、価値関数の推定はある程度正しかったと言える。
+
+# 2段階DTR推定のデモンストレーション
+
+## 使用するR-package
+
+```{r}
+library(DTRlearn2)
+library(DynTxRegime)
+library(DTRreg)
+```
