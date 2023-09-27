@@ -269,7 +269,9 @@ H1 <- cbind(o11, o12, o13, o14)
 H2 <- cbind(H1, a1, H1 * a1, r, o22, r * a1, o22 * a1)
 ```
 
-`y`に対する線形回帰モデルの最小二乗推定量を求めて、ステージ2の最適（潜在）アウトカム`ql2`を計算
+$$
+d^{opt}_2\left(h_2\right) = d^{opt}_2\left(x_1,a_1,x_2\right) = \underset{a_2} {\operatorname{argmax}}\ \mathrm{E}\left[Y\left(a_1,a_2\right)\mid X_1 = x_1,X_2\left(a_1\right)=x_2\right]
+$$
 
 ```{r}
 #| output: false
@@ -278,7 +280,11 @@ q_cont2 <- buildModelObj(model = ~ H2, solver.method = "lm")
 ql2 <- qLearn(moMain = q_main2, moCont = q_cont2, data = adhd, response = adhd["y"], txName = "a2")
 ```
 
-`ql2`に対する線形回帰モデルの最小二乗推定量を求める。
+`y`に対する線形回帰モデルの最小二乗推定量を求めて、ステージ2の最適（潜在）アウトカム`ql2`を計算
+
+$$
+d^{opt}_1\left(h_1\right) = d^{opt}_1\left(x_1\right) = \underset{a_1} {\operatorname{argmax}}\ \mathrm{E} \left[\underset{a_2} {\operatorname{max}}\ \mathrm{E}\left[Y\left(a_1,a_2\right)\mid X_1,X_2\left(a_1\right)\right]\mid X_1 = x_1\right]
+$$
 
 ```{r}
 #| output: false
@@ -286,3 +292,5 @@ q_main1 <- buildModelObj(model = ~ H1, solver.method = "lm")
 q_cont1 <- buildModelObj(model = ~ H1, solver.method = "lm")
 ql1 <- qLearn(moMain = q_main1, moCont = q_cont1, data = adhd, response = ql2, txName = "a1")
 ```
+
+`ql2`に対する線形回帰モデルの最小二乗推定量を求める。
