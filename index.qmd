@@ -242,3 +242,47 @@ library(DTRlearn2)
 library(DynTxRegime)
 library(DTRreg)
 ```
+
+## 使用するデータ
+
+```{r}
+data(adhd)
+attach(adhd)
+```
+
+```{r}
+#| echo: false
+t_adhd <- as_tibble(adhd) |>
+  slice_head(n = 7) |>
+  gt() |>
+  fmt_number(columns = c("o12"), decimals = 5) |>
+  tab_options(table.width = pct(50), table.font.size = pct(65))
+t_adhd
+```
+
+## 2段階Q学習（from R-package {DynTxRegime}）
+
+ステージ1、2の会議モデルの変数（履歴）を定義
+
+```{r}
+H1 <- cbind(o11, o12, o13, o14)
+H2 <- cbind(H1, a1, H1 * a1, r, o22, r * a1, o22 * a1)
+```
+
+`y`に対する線形回帰モデルの最小二乗推定量を求めて、ステージ2の最適（潜在）アウトカム`ql2`を計算
+
+```{r}
+#| output: false
+q_main2 <- buildModelObj(model = ~ H2, solver.method = "lm")
+q_cont2 <- buildModelObj(model = ~ H2, solver.method = "lm")
+ql2 <- qLearn(moMain = q_main2, moCont = q_cont2, data = adhd, response = adhd["y"], txName = "a2")
+```
+
+`ql2`に対する線形回帰モデルの最小二乗推定量を求める。
+
+```{r}
+#| output: false
+q_main1 <- buildModelObj(model = ~ H1, solver.method = "lm")
+q_cont1 <- buildModelObj(model = ~ H1, solver.method = "lm")
+ql1 <- qLearn(moMain = q_main1, moCont = q_cont1, data = adhd, response = ql2, txName = "a1")
+```
