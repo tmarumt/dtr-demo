@@ -260,7 +260,7 @@ t_adhd <- as_tibble(adhd) |>
 t_adhd
 ```
 
-## 2段階Q学習（from R-package {DynTxRegime}）
+## 2段階Q学習（from R-package {DynTxRegime}） {.smaller}
 
 ステージ1、2の会議モデルの変数（履歴）を定義
 
