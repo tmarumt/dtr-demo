@@ -1,0 +1,325 @@
+---
+title: "Demonstration of Dynamic Treatment Regimes"
+execute:
+  echo: true
+format:
+  revealjs:
+    standalone: true
+    embed-resources: true
+    width: 1600
+    height: 900
+    theme: quartomonothemer.scss
+    slide-number: true
+    fig-format: svg
+    html-math-method: katex
+---
+
+# Introduction {visibility="hidden"}
+
+```{r}
+#| output: false
+library(tidyverse)
+library(gt)
+library(gtExtras)
+library(quartomonothemer)
+library(showtext)
+
+font_title <- "Josefin Sans"
+font_text <- "Montserrat"
+font_sans <- "Noto Sans"
+color_base <- "#009F8C"
+color_base_light <- "#95DFD6"
+color_accent <- "#B75C9D"
+color_accent_light <- "#DBA6CC"
+gray <- "#bebebe"
+darkgray <- "#6d6d6d"
+
+font_add_google(font_title)
+font_add_google(font_text)
+showtext_auto()
+
+style_mono_quarto(
+  font_title = font_title,
+  font_text = font_text,
+  font_sans = font_sans,
+  color_base = color_base,
+  color_accent = color_accent,
+  color_link = color_accent,
+  color_code = color_base,
+  size_base = 30,
+  path_scss = "quartomonothemer.scss"
+)
+```
+
+# Q学習のデモンストレーション
+
+## DTRの推定
+
+:::: {.columns}
+
+::: {.column width="100%" height="50%"}
+$$
+\begin{aligned}
+& Y\mid\left(X=x,A=a\right)\sim \mathrm{N}\left(Q\left(x,a\right),1^2\right) & X\sim \mathrm{U}\left(0,1.5\right)\\
+& Q\left(x,a\right)=\mathrm{E}\left[Y\mid X=x,A=a\right]=x+a-ax & X\perp A
+\end{aligned}
+$$
+:::
+
+::: {.column width="40%" height="50%"}
+::: {.r-stack}
+::: {.fragment .fade-out fragment-index=1}
+シミュレーションデータの生成
+
+```{r}
+set.seed(20230928)
+n <- 10000
+x <- runif(n, 0, 1.5)
+a <- rbinom(n, 1, 0.5)
+y <- rnorm(n, x + a * (1 - x), 1)
+```
+:::
+
+::: {.fragment .fade-in-then-out fragment-index=1}
+$a=0$ or $1$ のときの $Y$ の条件付き期待値
+$$
+\begin{cases}
+Q\left(x,0\right)&=\mathrm{E}\left[Y\mid X=x,A=0\right] \\
+&=x+0-0 \cdot x \\
+&=x \qquad \text{if $a=0$,} \\
+Q\left(x,1\right)&=\mathrm{E}\left[Y\mid X=x,A=1\right] \\
+&=x+1-1 \cdot x \\
+&=1 \qquad \text{if $a=1$.}
+\end{cases}
+$$
+:::
+
+::: {.fragment .fade-in fragment-index=2}
+交互作用モデルの当てはめ
+
+```{r}
+fit <- lm(y ~ x * a)
+co <- coef(fit)
+```
+
+```{r}
+#| echo: false
+t_co <- as.data.frame(co) |> rownames_to_column("Variable") |>
+  rename(Estimate = co) |>
+  gt() |>
+  gt_highlight_rows(rows = 3:4) |>
+  tab_options(table.width = pct(50), table.font.size = pct(65))
+t_co
+```
+:::
+:::
+:::
+
+::: {.column width="60%" height="50%"}
+::: {.r-stack}
+::: {.fragment .fade-out fragment-index=2}
+```{r}
+#| echo: false
+#| fig-height: 6.5
+#| fig-width: 7
+#| fig-align: "center"
+sample_1dtr <- tibble(
+  x = x,
+  a = a,
+  trt = paste("A", "=", a, sep = " "),
+  y = y
+)
+
+g_sample_1dtr <- sample_1dtr |> ggplot() +
+  geom_point(mapping = aes(x = x, y = y, color = trt), size = 0.5, alpha = 0.5) +
+  geom_smooth(method = "lm", mapping = aes(x = x, y = y, color = trt), se = FALSE, linewidth = 2) +
+  labs(color = "Treatment")
+g_sample_1dtr
+```
+:::
+
+::: {.fragment .fade-in fragment-index=2}
+推定した最適DTR（ポリシー）
+
+```{r}
+#| include: false
+library(signs)
+co_a <- signs(co["a"], accuracy = 1e-5)
+co_x <- signs(co["x:a"], accuracy = 1e-5, add_plusses = TRUE)
+```
+
+$$
+\hat{d}\left(x\right) = \mathrm{I}\left(`r co_a``r co_x`x > 0\right)
+$$
+:::
+:::
+:::
+
+::::
+
+## 価値の評価
+
+:::: {.columns}
+
+::: {.column width="100%" height="50%"}
+$$
+\begin{aligned}
+V\left(d\right) &= \mathrm{E}\left[Q\left(X,1\right)\mathrm{I}\left(d\left(X\right) = 1\right) + Q\left(X,0\right)\mathrm{I}\left(d\left(X\right) = 0\right)\right] \\
+\hat{V}\left(\hat{d}\right) &= \frac{1}{n}\sum_i\left[Q\left(x_i,1\right)\mathrm{I}\left(\hat{d}\left(x_i\right) = 1\right) + Q\left(x_i,0\right)\mathrm{I}\left(\hat{d}\left(x_i\right) = 0\right)\right]
+\end{aligned}
+$$
+:::
+
+::: {.column width="50%" height="50%"}
+::: {.r-stack}
+::: {.fragment .fade-out fragment-index=1}
+```{r}
+policy_1dtr <- function(x, co1, co2) {
+  return(as.integer(co1 + x * co2 > 0))
+}
+
+ite_1dtr <- tibble(
+  x = x,
+  a = a,
+  a_opt = policy_1dtr(x, co["a"], co["x:a"]),
+  y = y,
+  q1 = co[1] + x * co["x"] + 1 * co["a"] + 1 * x * co["x:a"],
+  q0 = co[1] + x * co["x"] + 0 * co["a"] + 0 * x * co["x:a"],
+  q_opt = ifelse(a_opt == 1, q1, q0)
+) |>
+  mutate(i = row_number())
+```
+
+`q1`、`q0`はそれぞれ $a=1$ 、$a=0$ に強制的に割り当てたときの推定期待値
+:::
+
+::: {.fragment .fade-in fragment-index=1}
+```{r}
+ate_1dtr <- ite_1dtr |>
+  summarise(mean_y = mean(y), v_hat = mean(q_opt))
+```
+
+```{r}
+#| echo: false
+t_ate_1dtr <- ate_1dtr |>
+  gt() |>
+  fmt_number(columns = c("mean_y", "v_hat"), decimals = 5) |>
+  # |> cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat")
+  tab_options(table.width = pct(50), table.font.size = pct(65))
+t_ate_1dtr
+```
+
+推定した最適DTR（ポリシー）に従えば、アウトカムが $`r round(abs(ate_1dtr["mean_y"] - ate_1dtr["v_hat"]), 1)`$ ほど改善  
+※ あくまで学習データに基づく推測
+:::
+:::
+:::
+
+::: {.column width="50%" height="50%"}
+```{r}
+#| echo: false
+t_ite_1dtr <- ite_1dtr |>
+  slice_head(n = 7) |>
+  gt() |>
+  fmt_number(columns = c("x", "y", "q1", "q0", "q_opt"), decimals = 5) |>
+  # cols_label("x" = html("x<sub>i</sub>"), "a_opt" = html("a<sub>opt</sub>"), "q1" = html("Q(x<sub>i</sub>,1)"), "q0" = html("Q(x<sub>i</sub>,0)"), "q_opt" = html("Q<sub>opt</sub>")) |>
+  tab_options(table.width = pct(50), table.font.size = pct(65)) |>
+  cols_move_to_start("i")
+t_ite_1dtr
+```
+:::
+
+::::
+
+## 推定価値の評価
+
+推定したDTRで治療を行った場合のテストデータの生成
+
+```{r}
+set.seed(20230928 + 1)
+n <- 10000
+x_test <- runif(n, 0, 1.5)
+a_test <- policy_1dtr(x_test, co["a"], co["x:a"])
+y_test <- rnorm(n, x_test + a_test * (1 - x_test), 1)
+```
+
+テストデータに対して推定DTRによる治療を行った場合の価値の推定
+
+```{r}
+ate_test_1dtr <- ate_1dtr |>
+  mutate(mean_y_test = mean(y_test))
+```
+
+```{r}
+#| echo: false
+t_ate_test_1dtr <- ate_test_1dtr |>
+  gt() |>
+  fmt_number(columns = c("mean_y", "v_hat", "mean_y_test"), decimals = 5) |>
+  # |> cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat", "mean_y_test" = "Mean of y (test)")
+  tab_options(table.width = pct(50), table.font.size = pct(65))
+t_ate_test_1dtr
+```
+
+`mean_y_test`が学習データに基づく推定価値（ $=\hat{V}\left(\hat{d}\right)=$ `v_hat`）に近い値を示したため、価値関数の推定はある程度正しかったと言える。
+
+# 2段階DTR推定のデモンストレーション
+
+## 使用するR-package
+
+```{r}
+library(DTRlearn2)
+library(DynTxRegime)
+library(DTRreg)
+```
+
+## 使用するデータ
+
+```{r}
+data(adhd)
+attach(adhd)
+```
+
+```{r}
+#| echo: false
+t_adhd <- as_tibble(adhd) |>
+  slice_head(n = 7) |>
+  gt() |>
+  fmt_number(columns = c("o12"), decimals = 5) |>
+  tab_options(table.width = pct(50), table.font.size = pct(65))
+t_adhd
+```
+
+## 2段階Q学習（from R-package {DynTxRegime}） {.smaller}
+
+ステージ1、2の会議モデルの変数（履歴）を定義
+
+```{r}
+H1 <- cbind(o11, o12, o13, o14)
+H2 <- cbind(H1, a1, H1 * a1, r, o22, r * a1, o22 * a1)
+```
+
+$$
+d^{opt}_2\left(h_2\right) = d^{opt}_2\left(x_1,a_1,x_2\right) = \underset{a_2} {\operatorname{argmax}}\ \mathrm{E}\left[Y\left(a_1,a_2\right)\mid X_1 = x_1,X_2\left(a_1\right)=x_2\right]
+$$
+
+```{r}
+#| output: false
+q_main2 <- buildModelObj(model = ~ H2, solver.method = "lm")
+q_cont2 <- buildModelObj(model = ~ H2, solver.method = "lm")
+ql2 <- qLearn(moMain = q_main2, moCont = q_cont2, data = adhd, response = adhd["y"], txName = "a2")
+```
+
+`y`に対する線形回帰モデルの最小二乗推定量を求めて、ステージ2の最適（潜在）アウトカム`ql2`を計算
+
+$$
+d^{opt}_1\left(h_1\right) = d^{opt}_1\left(x_1\right) = \underset{a_1} {\operatorname{argmax}}\ \mathrm{E} \left[\underset{a_2} {\operatorname{max}}\ \mathrm{E}\left[Y\left(a_1,a_2\right)\mid X_1,X_2\left(a_1\right)\right]\mid X_1 = x_1\right]
+$$
+
+```{r}
+#| output: false
+q_main1 <- buildModelObj(model = ~ H1, solver.method = "lm")
+q_cont1 <- buildModelObj(model = ~ H1, solver.method = "lm")
+ql1 <- qLearn(moMain = q_main1, moCont = q_cont1, data = adhd, response = ql2, txName = "a1")
+```
+
+`ql2`に対する線形回帰モデルの最小二乗推定量を求める。
