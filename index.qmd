@@ -107,7 +107,8 @@ co <- coef(fit)
 t_co <- as.data.frame(co) |> rownames_to_column("Variable") |>
   rename(Estimate = co) |>
   gt() |>
-  gt_highlight_rows(rows = 3:4) |>
+  gt_theme_quarto() |>
+  gt_highlight_rows(rows = 3:4, fill = color_accent_light) |>
   tab_options(table.width = pct(50), table.font.size = pct(65))
 t_co
 ```
@@ -133,7 +134,10 @@ sample_1dtr <- tibble(
 g_sample_1dtr <- sample_1dtr |> ggplot() +
   geom_point(mapping = aes(x = x, y = y, color = trt), size = 0.5, alpha = 0.5) +
   geom_smooth(method = "lm", mapping = aes(x = x, y = y, color = trt), se = FALSE, linewidth = 2) +
-  labs(color = "Treatment")
+  scale_color_manual(values = c(color_base, color_accent)) +
+  labs(color = "Treatment") +
+  theme_quarto() +
+  theme(legend.position.inside = c(0.85, 0.1))
 g_sample_1dtr
 ```
 :::
@@ -179,15 +183,14 @@ policy_1dtr <- function(x, co1, co2) {
 }
 
 ite_1dtr <- tibble(
-  x = x,
-  a = a,
+  x = x, a = a, y = y,
   a_opt = policy_1dtr(x, co["a"], co["x:a"]),
-  y = y,
-  q1 = co[1] + x * co["x"] + 1 * co["a"] + 1 * x * co["x:a"],
-  q0 = co[1] + x * co["x"] + 0 * co["a"] + 0 * x * co["x:a"],
+  q1 = co[1] + x * co["x"] + 1 * co["a"]
+       + 1 * x * co["x:a"],
+  q0 = co[1] + x * co["x"] + 0 * co["a"]
+       + 0 * x * co["x:a"],
   q_opt = ifelse(a_opt == 1, q1, q0)
-) |>
-  mutate(i = row_number())
+) |> mutate(i = row_number())
 ```
 
 `q1`、`q0`はそれぞれ $a=1$ 、$a=0$ に強制的に割り当てたときの推定期待値
@@ -205,6 +208,7 @@ t_ate_1dtr <- ate_1dtr |>
   gt() |>
   fmt_number(columns = c("mean_y", "v_hat"), decimals = 5) |>
   # |> cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat")
+  gt_theme_quarto() |>
   tab_options(table.width = pct(50), table.font.size = pct(65))
 t_ate_1dtr
 ```
@@ -223,6 +227,7 @@ t_ite_1dtr <- ite_1dtr |>
   gt() |>
   fmt_number(columns = c("x", "y", "q1", "q0", "q_opt"), decimals = 5) |>
   # cols_label("x" = html("x<sub>i</sub>"), "a_opt" = html("a<sub>opt</sub>"), "q1" = html("Q(x<sub>i</sub>,1)"), "q0" = html("Q(x<sub>i</sub>,0)"), "q_opt" = html("Q<sub>opt</sub>")) |>
+  gt_theme_quarto() |>
   tab_options(table.width = pct(50), table.font.size = pct(65)) |>
   cols_move_to_start("i")
 t_ite_1dtr
@@ -256,6 +261,7 @@ t_ate_test_1dtr <- ate_test_1dtr |>
   gt() |>
   fmt_number(columns = c("mean_y", "v_hat", "mean_y_test"), decimals = 5) |>
   # |> cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat", "mean_y_test" = "Mean of y (test)")
+  gt_theme_quarto() |>
   tab_options(table.width = pct(50), table.font.size = pct(65))
 t_ate_test_1dtr
 ```
@@ -285,6 +291,7 @@ t_adhd <- as_tibble(adhd) |>
   slice_head(n = 7) |>
   gt() |>
   fmt_number(columns = c("o12"), decimals = 5) |>
+  gt_theme_quarto() |>
   tab_options(table.width = pct(50), table.font.size = pct(65))
 t_adhd
 ```
