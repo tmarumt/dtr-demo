@@ -2,6 +2,9 @@
 title: "Demonstration of Dynamic Treatment Regimes"
 execute:
   echo: true
+  warning: false
+  message: false
+  cache: false
 format:
   revealjs:
     standalone: true
@@ -11,6 +14,7 @@ format:
     theme: quartomonothemer.scss
     slide-number: true
     fig-format: svg
+    fig-align: center
     html-math-method: katex
 ---
 
@@ -24,23 +28,25 @@ library(gtExtras)
 library(quartomonothemer)
 library(showtext)
 
-font_title <- "Josefin Sans"
-font_text <- "Montserrat"
-font_sans <- "Noto Sans"
-color_base <- "#009F8C"
-color_base_light <- "#95DFD6"
-color_accent <- "#B75C9D"
-color_accent_light <- "#DBA6CC"
-gray <- "#bebebe"
-darkgray <- "#6d6d6d"
+font_title <- "Noto Sans JP"
+font_text <- "Noto Sans JP"
+font_code <- "Fira Code"
+font_sans <- font_text
+color_base <- "#005586"
+color_base_light <- "#80aac3"
+color_accent <- "#860070"
+color_accent_light <- "#c380b8"
+gray <- "#acb7be"
+darkgray <- "#63747e"
 
 font_add_google(font_title)
-font_add_google(font_text)
+font_add_google(font_code)
 showtext_auto()
 
 style_mono_quarto(
   font_title = font_title,
   font_text = font_text,
+  font_code = font_code,
   font_sans = font_sans,
   color_base = color_base,
   color_accent = color_accent,
@@ -108,8 +114,7 @@ t_co <- as.data.frame(co) |> rownames_to_column("Variable") |>
   rename(Estimate = co) |>
   gt() |>
   gt_theme_quarto() |>
-  gt_highlight_rows(rows = 3:4, fill = color_accent_light) |>
-  tab_options(table.width = pct(50), table.font.size = pct(65))
+  gt_highlight_rows(rows = 3:4, fill = color_accent_light)
 t_co
 ```
 :::
@@ -208,8 +213,7 @@ t_ate_1dtr <- ate_1dtr |>
   gt() |>
   fmt_number(columns = c("mean_y", "v_hat"), decimals = 5) |>
   # |> cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat")
-  gt_theme_quarto() |>
-  tab_options(table.width = pct(50), table.font.size = pct(65))
+  gt_theme_quarto()
 t_ate_1dtr
 ```
 
@@ -228,8 +232,8 @@ t_ite_1dtr <- ite_1dtr |>
   fmt_number(columns = c("x", "y", "q1", "q0", "q_opt"), decimals = 5) |>
   # cols_label("x" = html("x<sub>i</sub>"), "a_opt" = html("a<sub>opt</sub>"), "q1" = html("Q(x<sub>i</sub>,1)"), "q0" = html("Q(x<sub>i</sub>,0)"), "q_opt" = html("Q<sub>opt</sub>")) |>
   gt_theme_quarto() |>
-  tab_options(table.width = pct(50), table.font.size = pct(65)) |>
   cols_move_to_start("i")
+  # tab_options(table.width = pct(50), table.font.size = pct(65))
 t_ite_1dtr
 ```
 :::
@@ -261,8 +265,7 @@ t_ate_test_1dtr <- ate_test_1dtr |>
   gt() |>
   fmt_number(columns = c("mean_y", "v_hat", "mean_y_test"), decimals = 5) |>
   # |> cols_label("mean_y" = "Mean of y", "v_hat" = "V-hat", "mean_y_test" = "Mean of y (test)")
-  gt_theme_quarto() |>
-  tab_options(table.width = pct(50), table.font.size = pct(65))
+  gt_theme_quarto()
 t_ate_test_1dtr
 ```
 
@@ -291,8 +294,7 @@ t_adhd <- as_tibble(adhd) |>
   slice_head(n = 7) |>
   gt() |>
   fmt_number(columns = c("o12"), decimals = 5) |>
-  gt_theme_quarto() |>
-  tab_options(table.width = pct(50), table.font.size = pct(65))
+  gt_theme_quarto()
 t_adhd
 ```
 
