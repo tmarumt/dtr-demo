@@ -7,8 +7,8 @@ execute:
   cache: false
 format:
   revealjs:
-    standalone: true
-    embed-resources: true
+    standalone: false
+    embed-resources: false
     width: 1600
     height: 900
     theme: quartomonothemer.scss
@@ -16,6 +16,7 @@ format:
     fig-format: svg
     fig-align: center
     html-math-method: katex
+    pdf-separate-fragments: false
 ---
 
 # Introduction {visibility="hidden"}
@@ -32,11 +33,11 @@ font_title <- "Noto Sans JP"
 font_text <- "Noto Sans JP"
 font_code <- "Fira Code"
 font_sans <- font_text
-color_base <- "#005586"
-color_base_light <- "#80aac3"
-color_accent <- "#860070"
-color_accent_light <- "#c380b8"
-gray <- "#acb7be"
+color_base <- "#1071a7"
+color_base_light <- "#70aaca"
+color_accent <- "#a71071"
+color_accent_light <- "#ca70aa"
+gray <- "#acb8be"
 darkgray <- "#63747e"
 
 font_add_google(font_title)
@@ -227,13 +228,12 @@ t_ate_1dtr
 ```{r}
 #| echo: false
 t_ite_1dtr <- ite_1dtr |>
-  slice_head(n = 7) |>
+  slice_head(n = 6) |>
   gt() |>
-  fmt_number(columns = c("x", "y", "q1", "q0", "q_opt"), decimals = 5) |>
+  fmt_number(columns = c("x", "y", "q1", "q0", "q_opt"), decimals = 3) |>
   # cols_label("x" = html("x<sub>i</sub>"), "a_opt" = html("a<sub>opt</sub>"), "q1" = html("Q(x<sub>i</sub>,1)"), "q0" = html("Q(x<sub>i</sub>,0)"), "q_opt" = html("Q<sub>opt</sub>")) |>
   gt_theme_quarto() |>
   cols_move_to_start("i")
-  # tab_options(table.width = pct(50), table.font.size = pct(65))
 t_ite_1dtr
 ```
 :::
