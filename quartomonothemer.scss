@@ -7,21 +7,21 @@
 $font-family-sans-serif: "Noto Sans JP", sans-serif !default;
 $font-family-monospace: "Fira Code", monospace !default;
 // colors
-$color_base: #1071a7 !default;
-$color_accent: #a71071 !default;
+$color_base: #0081B0 !default;
+$color_accent: #D6431B !default;
 $body_bg: #ffffff !default;
 $body-color: #272822 !default;
-$link-color: #a71071 !default;
+$link-color: #D6431B !default;
 // headings
 $presentation-heading-font: "Noto Sans JP", sans-serif !default;
-$presentation-heading-color: #1071a7 !default;
+$presentation-heading-color: #0081B0 !default;
 $h1-font-size: 1.6em !default;
 $h2-font-size: 1.3em !default;
 $h3-font-size: 1.15em !default;
 $h4-font-size: 1.0em !default;
 // code blocks
 $code-block-border-color: #93a1a1 !default;
-$code-color: #1071a7;
+$code-color: #0081B0;
 /*-- scss:rules --*/
 
 $right-arrow: "\2192"; // Unicode character for right arrow

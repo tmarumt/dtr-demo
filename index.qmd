@@ -1,5 +1,8 @@
 ---
 title: "Demonstration of Dynamic Treatment Regimes"
+author: tmarumt
+date: 2023-09-28
+date-format: iso
 execute:
   echo: true
   warning: false
@@ -33,12 +36,12 @@ font_title <- "Noto Sans JP"
 font_text <- "Noto Sans JP"
 font_code <- "Fira Code"
 font_sans <- font_text
-color_base <- "#1071a7"
-color_base_light <- "#70aaca"
-color_accent <- "#a71071"
-color_accent_light <- "#ca70aa"
-gray <- "#acb8be"
-darkgray <- "#63747e"
+color_base <- "#0081B0"
+color_base_light <- "#98D0E5"
+color_accent <- "#D6431B"
+color_accent_light <- "#F1BAAB"
+gray <- "#bebebe"
+darkgray <- "#6d6d6d"
 
 font_add_google(font_title)
 font_add_google(font_code)
@@ -140,7 +143,7 @@ sample_1dtr <- tibble(
 g_sample_1dtr <- sample_1dtr |> ggplot() +
   geom_point(mapping = aes(x = x, y = y, color = trt), size = 0.5, alpha = 0.5) +
   geom_smooth(method = "lm", mapping = aes(x = x, y = y, color = trt), se = FALSE, linewidth = 2) +
-  scale_color_manual(values = c(color_base, color_accent)) +
+  scale_color_manual(values = c(color_base, color_accent, darkgray)) +
   labs(color = "Treatment") +
   theme_quarto() +
   theme(legend.position.inside = c(0.85, 0.1))
